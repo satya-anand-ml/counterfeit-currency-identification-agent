@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Counterfeit Currency Identification Agent</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1120;
+      --panel: #111827;
+      --panel-2: #172033;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --line: rgba(148, 163, 184, 0.22);
+      --green: #10b981;
+      --red: #dc2626;
+      --amber: #f59e0b;
+      --cyan: #22d3ee;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at 20% 0%, rgba(34, 211, 238, 0.12), transparent 30%), var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .fallback-shell { max-width: 1440px; margin: 0 auto; padding: 20px; }
+    .mb-5 { margin-bottom: 1.25rem; }
+    .mb-4 { margin-bottom: 1rem; }
+    .mb-2 { margin-bottom: .5rem; }
+    .mt-4 { margin-top: 1rem; }
+    .mt-3 { margin-top: .75rem; }
+    .mt-1 { margin-top: .25rem; }
+    .p-4 { padding: 1rem; }
+    .pl-5 { padding-left: 1.25rem; }
+    .flex { display: flex; }
+    .grid { display: grid; }
+    .hidden { display: none; }
+    .flex-col { flex-direction: column; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-end { align-items: flex-end; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-3 { gap: .75rem; }
+    .space-y-1 > * + * { margin-top: .25rem; }
+    .space-y-3 > * + * { margin-top: .75rem; }
+    .rounded-lg { border-radius: 8px; }
+    .border { border-width: 1px; border-style: solid; }
+    .border-slate-700 { border-color: #334155; }
+    .bg-slate-900\/70 { background: rgba(15, 23, 42, .70); }
+    .bg-slate-950\/50 { background: rgba(2, 6, 23, .50); }
+    .text-center { text-align: center; }
+    .text-sm { font-size: .875rem; line-height: 1.25rem; }
+    .text-xs { font-size: .75rem; line-height: 1rem; }
+    .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+    .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+    .font-bold { font-weight: 700; }
+    .font-extrabold { font-weight: 800; }
+    .font-black { font-weight: 900; }
+    .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .uppercase { text-transform: uppercase; }
+    .tracking-wide { letter-spacing: .025em; }
+    .text-cyan-300 { color: #67e8f9; }
+    .text-slate-100 { color: #f1f5f9; }
+    .text-slate-200 { color: #e2e8f0; }
+    .text-slate-300 { color: #cbd5e1; }
+    .list-disc { list-style-type: disc; }
+    .scan-grid { display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: 20px; align-items: start; }
+    .panel { background: rgba(17, 24, 39, 0.86); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 18px 80px rgba(0, 0, 0, 0.24); }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .btn { border: 1px solid var(--line); background: #1f2937; color: var(--text); border-radius: 8px; padding: 10px 13px; font-weight: 700; cursor: pointer; transition: transform .12s ease, border-color .12s ease, background .12s ease; }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(34, 211, 238, .55); }
+    .btn-primary { background: #0891b2; border-color: #22d3ee; }
+    .btn-danger { background: #7f1d1d; border-color: #ef4444; }
+    .stage { position: relative; width: 100%; min-height: 460px; overflow: hidden; background: #020617; border-radius: 8px; border: 1px solid var(--line); }
+    video, #previewImage, #overlayCanvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+    #previewImage { display: none; }
+    #overlayCanvas { pointer-events: none; }
+    .drop-zone { border: 2px dashed rgba(148, 163, 184, 0.45); border-radius: 8px; padding: 18px; text-align: center; color: var(--muted); cursor: pointer; background: rgba(15, 23, 42, 0.72); }
+    .drop-zone.dragover { border-color: var(--cyan); background: rgba(34, 211, 238, 0.10); color: var(--text); }
+    .gauge { width: 220px; height: 220px; border-radius: 999px; display: grid; place-items: center; margin: 8px auto 14px; background: conic-gradient(var(--red) 0deg, rgba(51, 65, 85, .65) 0deg); }
+    .gauge-inner { width: 162px; height: 162px; border-radius: 999px; background: var(--panel); display: grid; place-items: center; border: 1px solid var(--line); text-align: center; }
+    .score { font-size: 46px; line-height: 1; font-weight: 900; letter-spacing: 0; }
+    .muted { color: var(--muted); }
+    .check-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: rgba(15, 23, 42, 0.62); }
+    .pill { border-radius: 999px; padding: 5px 9px; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+    .pill-pass { background: rgba(16, 185, 129, .14); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, .38); }
+    .pill-fail { background: rgba(220, 38, 38, .15); color: #fca5a5; border: 1px solid rgba(220, 38, 38, .42); }
+    .metric { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; color: #cbd5e1; word-break: break-word; }
+    .status-line { min-height: 24px; color: #cbd5e1; }
+    @media (max-width: 1000px) {
+      .scan-grid { grid-template-columns: 1fr; }
+      .stage { min-height: 360px; }
+    }
+    @media (min-width: 768px) {
+      .md\:flex-row { flex-direction: row; }
+      .md\:items-end { align-items: flex-end; }
+      .md\:justify-between { justify-content: space-between; }
+      .md\:text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+    }
+    @media (max-width: 640px) {
+      .fallback-shell { padding: 12px; }
+      .stage { min-height: 300px; }
+      .gauge { width: 184px; height: 184px; }
+      .gauge-inner { width: 136px; height: 136px; }
+      .score { font-size: 38px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="fallback-shell">
+    <header class="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <div>
+        <p class="text-sm font-bold uppercase tracking-wide text-cyan-300">Public Safety Hackathon Prototype</p>
+        <h1 class="text-3xl font-black md:text-4xl">Counterfeit Currency Identification Agent</h1>
+      </div>
+      <div class="text-sm muted">Backend: <span id="apiUrlLabel" class="font-mono text-slate-200">http://localhost:8000</span></div>
+    </header>
+
+    <section class="scan-grid">
+      <div class="panel p-4">
+        <div class="toolbar mb-4">
+          <button id="startCameraBtn" class="btn btn-primary" type="button">Start Rear Camera</button>
+          <button id="captureBtn" class="btn" type="button" disabled>Capture Frame</button>
+          <button id="stopCameraBtn" class="btn btn-danger" type="button" disabled>Stop Camera</button>
+          <button id="rescanBtn" class="btn" type="button" disabled>Scan Current Image</button>
+        </div>
+
+        <div class="stage" id="stage">
+          <video id="video" autoplay playsinline muted></video>
+          <img id="previewImage" alt="Currency note preview" />
+          <canvas id="overlayCanvas"></canvas>
+        </div>
+
+        <div id="dropZone" class="drop-zone mt-4">
+          <input id="fileInput" type="file" accept="image/*" hidden />
+          <strong class="text-slate-100">Drop an image of an Rs 500 note here</strong>
+          <div class="mt-1 text-sm">or click to upload JPEG, PNG, or WebP</div>
+        </div>
+
+        <div id="statusLine" class="status-line mt-3 text-sm">Ready for camera capture or file upload.</div>
+      </div>
+
+      <aside class="panel p-4">
+        <div class="gauge" id="gauge">
+          <div class="gauge-inner">
+            <div>
+              <div id="scoreText" class="score">--</div>
+              <div class="text-xs font-bold uppercase tracking-wide muted">Authenticity</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="verdict" class="mb-4 rounded-lg border border-slate-700 bg-slate-900/70 p-3 text-center text-lg font-black">
+          Awaiting scan
+        </div>
+
+        <div id="checks" class="space-y-3"></div>
+
+        <div class="mt-4 rounded-lg border border-slate-700 bg-slate-950/50 p-3">
+          <div class="mb-2 text-sm font-black uppercase tracking-wide text-slate-300">Operator Notes</div>
+          <ul id="warnings" class="list-disc space-y-1 pl-5 text-sm muted">
+            <li>Use even lighting and keep the note flat inside the camera view.</li>
+          </ul>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = window.localStorage.getItem("currencyAgentApiBase") || "http://localhost:8000";
+    const video = document.getElementById("video");
+    const previewImage = document.getElementById("previewImage");
+    const canvas = document.getElementById("overlayCanvas");
+    const ctx = canvas.getContext("2d");
+    const startCameraBtn = document.getElementById("startCameraBtn");
+    const stopCameraBtn = document.getElementById("stopCameraBtn");
+    const captureBtn = document.getElementById("captureBtn");
+    const rescanBtn = document.getElementById("rescanBtn");
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+    const statusLine = document.getElementById("statusLine");
+    const scoreText = document.getElementById("scoreText");
+    const gauge = document.getElementById("gauge");
+    const verdict = document.getElementById("verdict");
+    const checksContainer = document.getElementById("checks");
+    const warningsContainer = document.getElementById("warnings");
+    const apiUrlLabel = document.getElementById("apiUrlLabel");
+
+    let stream = null;
+    let currentBlob = null;
+    let currentImageNatural = { width: 0, height: 0 };
+
+    apiUrlLabel.textContent = API_BASE;
+
+    function setStatus(message, tone = "normal") {
+      statusLine.textContent = message;
+      statusLine.style.color = tone === "error" ? "#fca5a5" : tone === "ok" ? "#86efac" : "#cbd5e1";
+    }
+
+    function setGauge(score) {
+      const value = Number.isFinite(score) ? Math.max(0, Math.min(100, score)) : 0;
+      const degrees = Math.round(value * 3.6);
+      const color = value >= 70 ? "var(--green)" : value >= 45 ? "var(--amber)" : "var(--red)";
+      gauge.style.background = `conic-gradient(${color} ${degrees}deg, rgba(51, 65, 85, .65) ${degrees}deg)`;
+      scoreText.textContent = Number.isFinite(score) ? `${value}` : "--";
+    }
+
+    function resetOverlay() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.max(1, Math.round(rect.width * window.devicePixelRatio));
+      canvas.height = Math.max(1, Math.round(rect.height * window.devicePixelRatio));
+      ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+      ctx.clearRect(0, 0, rect.width, rect.height);
+    }
+
+    function objectFitContainRect(containerW, containerH, sourceW, sourceH) {
+      const scale = Math.min(containerW / sourceW, containerH / sourceH);
+      const width = sourceW * scale;
+      const height = sourceH * scale;
+      return { x: (containerW - width) / 2, y: (containerH - height) / 2, width, height, scale };
+    }
+
+    function drawResults(result) {
+      resetOverlay();
+      const rect = canvas.getBoundingClientRect();
+      const source = currentImageNatural.width ? currentImageNatural : { width: video.videoWidth, height: video.videoHeight };
+      if (!source.width || !source.height) return;
+
+      const fitted = objectFitContainRect(rect.width, rect.height, source.width, source.height);
+      Object.entries(result.checks || {}).forEach(([key, check]) => {
+        if (!Array.isArray(check.bbox) || check.bbox.length !== 4) return;
+        const [xmin, ymin, xmax, ymax] = check.bbox;
+        const x = fitted.x + xmin * fitted.scale;
+        const y = fitted.y + ymin * fitted.scale;
+        const w = (xmax - xmin) * fitted.scale;
+        const h = (ymax - ymin) * fitted.scale;
+        const passed = check.status === "passed";
+        const color = passed ? "#10b981" : "#dc2626";
+        const label = `${check.label || key}: ${check.status.toUpperCase()}`;
+
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = color;
+        ctx.strokeRect(x, y, w, h);
+        ctx.font = "700 13px Inter, system-ui, sans-serif";
+        const labelWidth = ctx.measureText(label).width + 14;
+        const labelY = Math.max(6, y - 26);
+        ctx.fillStyle = color;
+        ctx.fillRect(x, labelY, labelWidth, 22);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(label, x + 7, labelY + 15);
+      });
+    }
+
+    function renderChecks(result) {
+      checksContainer.innerHTML = "";
+      Object.entries(result.checks || {}).forEach(([key, check]) => {
+        const row = document.createElement("div");
+        row.className = "check-row";
+        const statusClass = check.status === "passed" ? "pill-pass" : "pill-fail";
+        const metrics = check.metrics || {};
+        const serial = metrics.recognized_text ? `<div class="metric">OCR: ${escapeHtml(metrics.recognized_text)}</div>` : "";
+        row.innerHTML = `
+          <div>
+            <div class="font-extrabold">${escapeHtml(check.label || key)}</div>
+            <div class="metric">confidence ${(Number(check.confidence || 0) * 100).toFixed(1)}%</div>
+            ${serial}
+          </div>
+          <div class="pill ${statusClass}">${escapeHtml(check.status || "unknown")}</div>
+        `;
+        checksContainer.appendChild(row);
+      });
+
+      warningsContainer.innerHTML = "";
+      const warnings = result.warnings && result.warnings.length ? result.warnings : ["No warnings returned by the detector."];
+      warnings.forEach((warning) => {
+        const li = document.createElement("li");
+        li.textContent = warning;
+        warningsContainer.appendChild(li);
+      });
+    }
+
+    function renderResult(result) {
+      const score = Number(result.authenticity_score);
+      setGauge(score);
+      const prettyVerdict = String(result.verdict || "unknown").replaceAll("_", " ").toUpperCase();
+      verdict.textContent = prettyVerdict;
+      verdict.style.borderColor = score >= 70 ? "rgba(16,185,129,.45)" : score >= 45 ? "rgba(245,158,11,.48)" : "rgba(220,38,38,.50)";
+      verdict.style.color = score >= 70 ? "#86efac" : score >= 45 ? "#fcd34d" : "#fca5a5";
+      renderChecks(result);
+      drawResults(result);
+    }
+
+    async function scanBlob(blob) {
+      currentBlob = blob;
+      setStatus("Scanning note through local FastAPI detector...");
+      rescanBtn.disabled = true;
+      const form = new FormData();
+      form.append("file", blob, "currency-note.png");
+
+      try {
+        const response = await fetch(`${API_BASE}/api/v1/scan`, { method: "POST", body: form });
+        const payload = await response.json();
+        if (!response.ok) {
+          const detail = payload.detail && payload.detail.error ? payload.detail.error : JSON.stringify(payload.detail || payload);
+          throw new Error(detail);
+        }
+        renderResult(payload);
+        setStatus("Scan complete. Review highlighted regions before taking action.", "ok");
+      } catch (error) {
+        setStatus(`Scan failed: ${error.message}`, "error");
+      } finally {
+        rescanBtn.disabled = false;
+      }
+    }
+
+    async function startCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false
+        });
+        video.srcObject = stream;
+        video.style.display = "block";
+        previewImage.style.display = "none";
+        startCameraBtn.disabled = true;
+        stopCameraBtn.disabled = false;
+        captureBtn.disabled = false;
+        setStatus("Camera active. Align the Rs 500 note and capture a frame.");
+        resetOverlay();
+      } catch (error) {
+        setStatus(`Camera access failed: ${error.message}`, "error");
+      }
+    }
+
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+        stream = null;
+      }
+      video.srcObject = null;
+      startCameraBtn.disabled = false;
+      stopCameraBtn.disabled = true;
+      captureBtn.disabled = true;
+      setStatus("Camera stopped.");
+    }
+
+    function captureFrame() {
+      if (!video.videoWidth || !video.videoHeight) {
+        setStatus("Camera frame is not ready yet.", "error");
+        return;
+      }
+      const frame = document.createElement("canvas");
+      frame.width = video.videoWidth;
+      frame.height = video.videoHeight;
+      frame.getContext("2d").drawImage(video, 0, 0, frame.width, frame.height);
+      frame.toBlob((blob) => {
+        if (!blob) {
+          setStatus("Could not capture camera frame.", "error");
+          return;
+        }
+        currentImageNatural = { width: frame.width, height: frame.height };
+        previewImage.src = URL.createObjectURL(blob);
+        previewImage.style.display = "block";
+        video.style.display = "none";
+        scanBlob(blob);
+      }, "image/png", 0.95);
+    }
+
+    function loadFile(file) {
+      if (!file || !file.type.startsWith("image/")) {
+        setStatus("Please upload a valid image file.", "error");
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      previewImage.onload = () => {
+        currentImageNatural = { width: previewImage.naturalWidth, height: previewImage.naturalHeight };
+        resetOverlay();
+        scanBlob(file);
+      };
+      previewImage.src = url;
+      previewImage.style.display = "block";
+      video.style.display = "none";
+      setStatus("Image loaded. Starting scan...");
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#039;"
+      }[char]));
+    }
+
+    startCameraBtn.addEventListener("click", startCamera);
+    stopCameraBtn.addEventListener("click", stopCamera);
+    captureBtn.addEventListener("click", captureFrame);
+    rescanBtn.addEventListener("click", () => currentBlob && scanBlob(currentBlob));
+    dropZone.addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", (event) => loadFile(event.target.files[0]));
+    dropZone.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      dropZone.classList.add("dragover");
+    });
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+    dropZone.addEventListener("drop", (event) => {
+      event.preventDefault();
+      dropZone.classList.remove("dragover");
+      loadFile(event.dataTransfer.files[0]);
+    });
+    window.addEventListener("resize", () => {
+      resetOverlay();
+      if (currentBlob) setStatus("Viewport changed. Rescan or keep reviewing current result.");
+    });
+
+    setGauge(Number.NaN);
+    resetOverlay();
+  </script>
+</body>
+</html>

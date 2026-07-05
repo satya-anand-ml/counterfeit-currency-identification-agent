@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.git/
+.gitignore
+outputs/
+work/
+.venv/
+venv/
+env/
+*.zip
+*.log
