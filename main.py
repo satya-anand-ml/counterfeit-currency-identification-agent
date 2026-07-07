@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import  FileResponse
 
 from detector import CurrencyDetector
 
@@ -28,12 +28,14 @@ detector = CurrencyDetector()
 BASE_DIR = Path(__file__).resolve().parent
 
 
-@app.get("/", response_class=HTMLResponse)
-async def dashboard() -> HTMLResponse:
+@app.get("/")
+async def dashboard():
     dashboard_path = BASE_DIR / "index.html"
+
     if not dashboard_path.exists():
         raise HTTPException(status_code=404, detail="Dashboard file not found.")
-    return HTMLResponse(dashboard_path.read_text(encoding="utf-8"))
+
+    return FileResponse(dashboard_path)
 
 
 @app.get("/api/v1/health")
@@ -71,4 +73,9 @@ async def scan_currency(file: UploadFile = File(...)) -> Dict[str, Any]:
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(
+        "main:app",
+        host="127.0.0.1",
+        port=7860,
+        reload=True
+    )

@@ -116,7 +116,7 @@
         <p class="text-sm font-bold uppercase tracking-wide text-cyan-300">Public Safety Hackathon Prototype</p>
         <h1 class="text-3xl font-black md:text-4xl">Counterfeit Currency Identification Agent</h1>
       </div>
-      <div class="text-sm muted">Backend: <span id="apiUrlLabel" class="font-mono text-slate-200">http://localhost:8000</span></div>
+      <div class="text-sm muted">Backend: <span id="apiUrlLabel" class="font-mono text-slate-200">http://localhost:7860</span></div>
     </header>
 
     <section class="scan-grid">
@@ -136,7 +136,7 @@
 
         <div id="dropZone" class="drop-zone mt-4">
           <input id="fileInput" type="file" accept="image/*" hidden />
-          <strong class="text-slate-100">Drop an image of an Rs 500 note here</strong>
+          <strong class="text-slate-100">Drop an image of an Indian Currency note here</strong>
           <div class="mt-1 text-sm">or click to upload JPEG, PNG, or WebP</div>
         </div>
 
@@ -170,7 +170,8 @@
   </main>
 
   <script>
-    const API_BASE = window.localStorage.getItem("currencyAgentApiBase") || "http://localhost:8000";
+    const API_BASE = "http://127.0.0.1:7860";
+
     const video = document.getElementById("video");
     const previewImage = document.getElementById("previewImage");
     const canvas = document.getElementById("overlayCanvas");
@@ -194,6 +195,7 @@
     let currentImageNatural = { width: 0, height: 0 };
 
     apiUrlLabel.textContent = API_BASE;
+   
 
     function setStatus(message, tone = "normal") {
       statusLine.textContent = message;
